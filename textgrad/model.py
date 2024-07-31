@@ -6,7 +6,7 @@ from textgrad.engine import EngineLM, get_engine
 from .config import SingletonBackwardEngine
 
 class BlackboxLLM(Module):
-    def __init__(self, engine: Union[EngineLM, str] = None, system_prompt: Union[Variable, str] = None):
+    def __init__(self, engine: Union[EngineLM, str] = None, system_prompt: Union[Variable, str] = None, **kwargs):
         """
         Initialize the LLM module.
 
@@ -25,7 +25,7 @@ class BlackboxLLM(Module):
         if isinstance(system_prompt, str):
             system_prompt = Variable(system_prompt, requires_grad=False, role_description="system prompt for the language model")
         self.system_prompt = system_prompt
-        self.llm_call = LLMCall(self.engine, self.system_prompt)
+        self.llm_call = LLMCall(self.engine, self.system_prompt, kwargs)
 
     def parameters(self):
         """

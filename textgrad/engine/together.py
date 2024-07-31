@@ -38,7 +38,7 @@ class ChatTogether(EngineLM, CachedEngine):
         self.model_string = model_string
 
     def generate(
-        self, prompt, system_prompt=None, temperature=0, max_tokens=2000, top_p=0.99
+        self, prompt, system_prompt=None, temperature=0, max_tokens=2000, top_p=0.99, **kwargs
     ):
 
         sys_prompt_arg = system_prompt if system_prompt else self.system_prompt
@@ -59,6 +59,7 @@ class ChatTogether(EngineLM, CachedEngine):
             temperature=temperature,
             max_tokens=max_tokens,
             top_p=top_p,
+            **kwargs
         )
 
         response = response.choices[0].message.content

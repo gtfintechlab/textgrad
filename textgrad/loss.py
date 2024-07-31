@@ -9,7 +9,8 @@ from .config import SingletonBackwardEngine
 class TextLoss(Module):
     def __init__(self, 
                  eval_system_prompt: Union[Variable, str],
-                 engine: Union[EngineLM, str] = None):
+                 engine: Union[EngineLM, str] = None,
+                 **kwargs):
         """
         A vanilla loss function to evaluate a response.
         In particular, this module is used to evaluate any given text object.
@@ -39,7 +40,7 @@ class TextLoss(Module):
         if isinstance(engine, str):
             engine = get_engine(engine)
         self.engine = engine
-        self.llm_call = LLMCall(self.engine, self.eval_system_prompt)
+        self.llm_call = LLMCall(self.engine, self.eval_system_prompt, kwargs=kwargs)
 
     def forward(self, instance: Variable):
         """
@@ -58,6 +59,7 @@ class MultiFieldEvaluation(Module):
         role_descriptions: List[str],
         engine: Union[EngineLM, str] = None,
         system_prompt: Variable = None,
+        **kwargs
     ):
         """A module to compare two variables using a language model.
 
@@ -100,7 +102,8 @@ class MultiFieldEvaluation(Module):
         self.formatted_llm_call = FormattedLLMCall(engine=self.engine,
                                                    format_string=self.format_string,
                                                    fields=self.fields,
-                                                   system_prompt=self.system_prompt)
+                                                   system_prompt=self.system_prompt,
+                                                   kwargs=kwargs)
 
     def forward(self, inputs: List[Variable]):
         for role_description, var in zip(self.role_descriptions, inputs):
@@ -119,12 +122,14 @@ class MultiFieldTokenParsedEvaluation(MultiFieldEvaluation):
         engine: Union[EngineLM, str] = None,
         system_prompt: Variable = None,
         parse_tags: List[str] = None,
+        **kwargs
     ):
         super().__init__(
             evaluation_instruction=evaluation_instruction,
             role_descriptions=role_descriptions,
             engine=engine,
             system_prompt=system_prompt,
+            **kwargs
         )
         self.parse_tags = parse_tags
 
@@ -148,7 +153,8 @@ class MultiChoiceTestTime(Module):
     def __init__(self,
                  evaluation_instruction: str,
                  engine: Union[EngineLM, str] = None,
-                 system_prompt: Variable = None):
+                 system_prompt: Variable = None,
+                 **kwargs):
         """
         The test-time loss to use when working on a response to a multiple choice question.
 
@@ -181,7 +187,8 @@ class MultiChoiceTestTime(Module):
         self.formatted_llm_call = FormattedLLMCall(engine=self.engine,
                                                    format_string=self.format_string,
                                                    fields=self.fields,
-                                                   system_prompt=self.tt_system_prompt)
+                                                   system_prompt=self.tt_system_prompt,
+                                                   kwargs=kwargs)
 
     def forward(self, question: str, prediction: Variable) -> Variable:
         question_variable = Variable(question, 
@@ -196,7 +203,8 @@ class ImageQALoss(Module):
     def __init__(self,
                  evaluation_instruction: str,
                  engine: Union[EngineLM, str] = None,
-                 system_prompt: Variable = None):
+                 system_prompt: Variable = None,
+                 **kwargs):
         super().__init__()
         self.evaluation_instruction = Variable(evaluation_instruction, role_description="evaluation instruction", requires_grad=False)
         if ((engine is None) and (SingletonBackwardEngine().get_engine() is None)):
@@ -215,7 +223,8 @@ class ImageQALoss(Module):
 
         self.multimodal_llm_call = OrderedFieldsMultimodalLLMCall(engine=self.engine,
                                                                   system_prompt=self.system_prompt,
-                                                                  fields=["Evaluation Instruction", "Question", "Image", "Answer"])
+                                                                  fields=["Evaluation Instruction", "Question", "Image", "Answer"],
+                                                                  kwargs=kwargs)
 
     def forward(self, image: Variable, question: Variable, response: Variable) -> Variable:
         

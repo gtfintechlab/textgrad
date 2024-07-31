@@ -19,7 +19,7 @@ from .function import Function, BackwardContext
 
 
 class LLMCall(Function):
-    def __init__(self, engine: EngineLM, system_prompt: Variable = None):
+    def __init__(self, engine: EngineLM, system_prompt: Variable = None, kwargs: dict = None):
         """The simple LLM call function. This function will call the LLM with the input and return the response, also register the grad_fn for backpropagation.
 
         :param engine: engine to use for the LLM call
@@ -32,6 +32,7 @@ class LLMCall(Function):
         self.system_prompt = system_prompt
         if self.system_prompt and self.system_prompt.get_role_description() is None:
             self.system_prompt.set_role_description(SYSTEM_PROMPT_DEFAULT_ROLE)
+        self.kwargs = kwargs
     
     def forward(self, input_variable: Variable, response_role_description: str = VARIABLE_OUTPUT_DEFAULT_ROLE) -> Variable:
         """
@@ -57,7 +58,7 @@ class LLMCall(Function):
         system_prompt_value = self.system_prompt.value if self.system_prompt else None
 
         # Make the LLM Call
-        response_text = self.engine(input_variable.value, system_prompt=system_prompt_value)
+        response_text = self.engine(input_variable.value, system_prompt=system_prompt_value, **self.kwargs)
 
         # Create the response variable
         response = Variable(
@@ -230,7 +231,8 @@ class FormattedLLMCall(LLMCall):
                  engine: EngineLM, 
                  format_string: str,
                  fields: dict[str, str],
-                 system_prompt: Variable = None):
+                 system_prompt: Variable = None,
+                 kwargs: dict = None):
         """This class is responsible for handling the formatting of the input before calling the LLM.
         It inherits from the LLMCall class and reuses its backward function.
 
@@ -243,7 +245,7 @@ class FormattedLLMCall(LLMCall):
         :param system_prompt: The system prompt to use for the LLM call. Default value depends on the engine.
         :type system_prompt: Variable, optional
         """
-        super().__init__(engine, system_prompt)
+        super().__init__(engine, system_prompt, kwargs)
         self.format_string = format_string
         self.fields = fields
     
@@ -273,7 +275,7 @@ class FormattedLLMCall(LLMCall):
         system_prompt_value = self.system_prompt.value if self.system_prompt else None
 
         # Make the LLM Call
-        response_text = self.engine(formatted_input_string, system_prompt=system_prompt_value)
+        response_text = self.engine(formatted_input_string, system_prompt=system_prompt_value, **self.kwargs)
 
         # Create the response variable
         response = Variable(
@@ -319,7 +321,7 @@ class LLMCall_with_in_context_examples(LLMCall):
         system_prompt_value = self.system_prompt.value if self.system_prompt else None
 
         # Make the LLM Call
-        response_text = self.engine(input_variable.value, system_prompt=system_prompt_value)
+        response_text = self.engine(input_variable.value, system_prompt=system_prompt_value, **self.kwargs)
 
 
         # Create the response variable
