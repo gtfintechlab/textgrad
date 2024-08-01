@@ -29,7 +29,8 @@ class MultimodalLLMCall(Function):
     """
     def __init__(self, 
                  engine: Union[str, EngineLM], 
-                 system_prompt: Variable = None):
+                 system_prompt: Variable = None,
+                 kwargs: dict = None):
         super().__init__()
         self.engine = validate_engine_or_get_default(engine)
         validate_multimodal_engine(self.engine)
@@ -37,7 +38,7 @@ class MultimodalLLMCall(Function):
         self.system_prompt = system_prompt
         if self.system_prompt and self.system_prompt.get_role_description() is None:
             self.system_prompt.set_role_description(SYSTEM_PROMPT_DEFAULT_ROLE)
-    
+        self.kwargs = kwargs
     
     def forward(self, 
                 inputs: List[Variable], 
@@ -66,7 +67,7 @@ class MultimodalLLMCall(Function):
         system_prompt_value = self.system_prompt.value if self.system_prompt else None
         input_content = [inp.value for inp in inputs]
         # Make the LLM Call
-        response_text = self.engine(input_content, system_prompt=system_prompt_value)
+        response_text = self.engine(input_content, system_prompt=system_prompt_value, **self.kwargs)
 
         # Create the response variable
         response = Variable(
@@ -198,7 +199,8 @@ class OrderedFieldsMultimodalLLMCall(MultimodalLLMCall):
     def __init__(self, 
                  engine: Union[str, EngineLM], 
                  fields: List[str],
-                 system_prompt: Variable = None):
+                 system_prompt: Variable = None,
+                 kwargs: dict = None):
 
         self.engine = validate_engine_or_get_default(engine)
         validate_multimodal_engine(self.engine)
@@ -208,6 +210,7 @@ class OrderedFieldsMultimodalLLMCall(MultimodalLLMCall):
             self.system_prompt.set_role_description(SYSTEM_PROMPT_DEFAULT_ROLE)
 
         self.fields = fields
+        self.kwargs = kwargs
         
     def forward(self, 
                 inputs: dict[str, Variable], 
@@ -228,7 +231,7 @@ class OrderedFieldsMultimodalLLMCall(MultimodalLLMCall):
         system_prompt_value = self.system_prompt.value if self.system_prompt else None
 
         # Make the LLM Call
-        response_text = self.engine(forward_content, system_prompt=system_prompt_value)
+        response_text = self.engine(forward_content, system_prompt=system_prompt_value, **self.kwargs)
 
         # Create the response variable
         response = Variable(

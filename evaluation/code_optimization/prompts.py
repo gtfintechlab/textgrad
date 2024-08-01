@@ -27,7 +27,8 @@ class CodeTestTimewithTests(Module):
     def __init__(self,
                  engine: EngineLM,
                  evaluation_instruction: str = default_instruction_test,
-                 system_prompt: Variable = None):
+                 system_prompt: Variable = None,
+                 **kwargs):
         super().__init__()
         if system_prompt:
             self.tt_system_prompt = system_prompt
@@ -44,7 +45,8 @@ class CodeTestTimewithTests(Module):
         self.formatted_llm_call = FormattedLLMCall(engine=self.engine,
                                                    format_string=self.format_string,
                                                    fields=self.fields,
-                                                   system_prompt=self.tt_system_prompt)
+                                                   system_prompt=self.tt_system_prompt,
+                                                   kwargs=kwargs)
 
     def forward(self, problem: str, program: Variable, tests: str) -> Variable:
         problem_variable = Variable(problem,

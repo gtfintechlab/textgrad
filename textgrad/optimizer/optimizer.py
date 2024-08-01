@@ -87,7 +87,8 @@ class TextualGradientDescent(Optimizer):
                  new_variable_tags: List[str]=None,
                  optimizer_system_prompt: str=OPTIMIZER_SYSTEM_PROMPT,
                  in_context_examples: List[str]=None,
-                 gradient_memory: int=0):
+                 gradient_memory: int=0, 
+                 **kwargs):
         """TextualGradientDescent optimizer
 
         :param engine: the engine to use for updating variables
@@ -121,6 +122,7 @@ class TextualGradientDescent(Optimizer):
         self.gradient_memory = gradient_memory
         self.gradient_memory_dict = defaultdict(list)
         self.do_gradient_memory = (gradient_memory > 0)
+        self.kwargs = kwargs
 
     @property
     def constraint_text(self):
@@ -175,7 +177,7 @@ class TextualGradientDescent(Optimizer):
         """
         for parameter in self.parameters:
             prompt_update_parameter = self._update_prompt(parameter)
-            new_text = self.engine(prompt_update_parameter, system_prompt=self.optimizer_system_prompt)
+            new_text = self.engine(prompt_update_parameter, system_prompt=self.optimizer_system_prompt, **self.kwargs)
             logger.info(f"TextualGradientDescent optimizer response", extra={"optimizer.response": new_text})
             try:
                 new_value = new_text.split(self.new_variable_tags[0])[1].split(self.new_variable_tags[1])[0].strip()
@@ -201,7 +203,8 @@ class TextualGradientDescentwithMomentum(Optimizer):
                  constraints: List[str]=None,
                  new_variable_tags: List[str]=None,
                  in_context_examples: List[str]=None,
-                 optimizer_system_prompt: str=OPTIMIZER_SYSTEM_PROMPT):
+                 optimizer_system_prompt: str=OPTIMIZER_SYSTEM_PROMPT,
+                 **kwargs):
         super().__init__(parameters)
 
         if new_variable_tags is None:
@@ -222,6 +225,7 @@ class TextualGradientDescentwithMomentum(Optimizer):
         self.new_variable_tags = new_variable_tags
         self.in_context_examples = in_context_examples if in_context_examples is not None else []
         self.do_in_context_examples = (len(self.in_context_examples) > 0)
+        self.kwargs = kwargs
 
         logger.info(f"TextualGradientDescent initialized with momentum window: {momentum_window}")
 
@@ -267,7 +271,7 @@ class TextualGradientDescentwithMomentum(Optimizer):
         for idx, parameter in enumerate(self.parameters):
             self._update_momentum_storage(parameter, momentum_storage_idx=idx)
             prompt_update_parameter = self._update_prompt(parameter, momentum_storage_idx=idx)
-            new_text = self.engine(prompt_update_parameter, system_prompt=self.optimizer_system_prompt)
+            new_text = self.engine(prompt_update_parameter, system_prompt=self.optimizer_system_prompt, **self.kwargs)
             logger.info(f"TextualGradientDescentwithMomentum optimizer response", extra={"optimizer.response": new_text})
             try:
                 new_value = new_text.split(self.new_variable_tags[0])[1].split(self.new_variable_tags[1])[0].strip()
